@@ -1,3 +1,116 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(82 82 82) rgb(38 38 38);
+}
+
+.tiptap h1 {
+  font-size: 2em;
+  font-weight: bold;
+  margin: 1em 0 0.5em 0;
+  color: white;
+}
+
+.tiptap h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 1em 0 0.5em 0;
+  color: white;
+}
+
+.tiptap h3 {
+  font-size: 1.17em;
+  font-weight: bold;
+  margin: 1em 0 0.5em 0;
+  color: white;
+}
+
+.tiptap p {
+  margin: 0.5em 0;
+  color: white;
+}
+
+.tiptap ul, .tiptap ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+  color: white;
+}
+
+.tiptap ul {
+  list-style-type: disc;
+}
+
+.tiptap ol {
+  list-style-type: decimal;
+}
+
+.tiptap li {
+  margin: 0.25em 0;
+  color: white;
+}
+
+.tiptap li::marker {
+  color: rgb(163 163 163);
+}
+
+.tiptap blockquote {
+  border-left: 3px solid rgb(82 82 82);
+  margin: 1em 0;
+  padding-left: 1em;
+  color: rgb(163 163 163);
+}
+
+.tiptap code {
+  background-color: rgb(38 38 38);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  color: rgb(163 163 163);
+}
+
+.tiptap pre {
+  background-color: rgb(38 38 38);
+  padding: 1em;
+  border-radius: 6px;
+  overflow-x: auto;
+  color: rgb(163 163 163);
+}
+
+.tiptap hr {
+  border: none;
+  border-top: 1px solid rgb(82 82 82);
+  margin: 2em 0;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: rgb(38 38 38);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgb(82 82 82);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgb(115 115 115);
+}
+
+.scrollbar-track-neutral-800::-webkit-scrollbar-track {
+  background: rgb(38 38 38);
+}
+
+.scrollbar-thumb-neutral-600::-webkit-scrollbar-thumb {
+  background: rgb(82 82 82);
+}
+
+.hover\:scrollbar-thumb-neutral-500:hover::-webkit-scrollbar-thumb {
+  background: rgb(115 115 115);
+}
