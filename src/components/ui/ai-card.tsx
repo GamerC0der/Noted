@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { motion, Variants } from "motion/react";
-import React, { useState } from "react";
+import React from "react";
 
 type AICardProps = {
   cardTitle?: string;
@@ -13,7 +13,6 @@ const AICard = ({
   cardTitle = "AI Integrated",
   cardDescription = "Hyper-Fast AI",
 }: AICardProps) => {
-  const [isHovered, setIsHovered] = useState(false);
 
   const iconVariant: Variants = {
     open: {

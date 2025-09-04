@@ -1,6 +1,6 @@
 "use client";
 
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
 import { useEffect, useState, useRef } from 'react';
@@ -9,7 +9,7 @@ interface SlashCommand {
   title: string;
   description: string;
   icon: string | React.ReactNode;
-  command: (editor: any) => void;
+  command: (editor: Editor) => void;
 }
 
 const slashCommands: SlashCommand[] = [
@@ -39,7 +39,12 @@ const slashCommands: SlashCommand[] = [
   },
 ];
 
-const TiptapEditor = () => {
+interface TiptapEditorProps {
+  content?: string;
+  onChange?: (content: string) => void;
+}
+
+const TiptapEditor = ({ content = "", onChange }: TiptapEditorProps) => {
   const [mounted, setMounted] = useState(false);
   const [showSlashCommands, setShowSlashCommands] = useState(false);
   const [slashCommandIndex, setSlashCommandIndex] = useState(0);
@@ -71,7 +76,7 @@ const TiptapEditor = () => {
         },
       }),
     ],
-    content: '',
+    content,
     immediatelyRender: false,
     editorProps: {
       attributes: {
@@ -158,8 +163,20 @@ const TiptapEditor = () => {
       if (placeholder) {
         placeholder.style.display = isEmpty ? 'block' : 'none';
       }
+      if (onChange) {
+        onChange(editor.getHTML());
+      }
     },
   });
+
+  useEffect(() => {
+    if (editor && content !== undefined) {
+      const currentContent = editor.getHTML();
+      if (currentContent !== content) {
+        editor.commands.setContent(content);
+      }
+    }
+  }, [editor, content]);
 
   useEffect(() => {
     if (editor) {
@@ -227,7 +244,6 @@ const TiptapEditor = () => {
                 let horizontal = 'left';
 
                 const containerWidth = containerRect?.width || window.innerWidth;
-                const containerHeight = containerRect?.height || window.innerHeight;
 
                 if (x + toolbarWidth > containerWidth) {
                   x = x - toolbarWidth + 20; 
@@ -235,7 +251,7 @@ const TiptapEditor = () => {
                 }
 
                 if (x < 0) {
-                  x = 10; // Small margin from left edge
+                  x = 10;
                 }
 
                 if (y - toolbarHeight < 0) {
@@ -253,7 +269,7 @@ const TiptapEditor = () => {
           }}
         />
         <div className="tiptap-placeholder absolute top-6 left-6 text-neutral-500 pointer-events-none">
-          Type "/" for commands...
+          Type &ldquo;/&rdquo; for commands...
         </div>
         
         {showSlashCommands && (

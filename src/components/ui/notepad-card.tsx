@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { motion, Variants } from "motion/react";
-import React, { useState } from "react";
+import React from "react";
 
 type NotepadCardProps = {
   cardTitle?: string;
@@ -13,24 +13,6 @@ const NotepadCard = ({
   cardTitle = "Note It Down",
   cardDescription = "Quick and Easy",
 }: NotepadCardProps) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  const cardVariant: Variants = {
-    open: {
-      transform: "translateY(-8px)",
-      transition: {
-        duration: 0.3,
-        ease: "easeInOut",
-      },
-    },
-    close: {
-      transform: "translateY(0px)",
-      transition: {
-        duration: 0.3,
-        ease: "easeInOut",
-      },
-    },
-  };
 
   const iconVariant: Variants = {
     open: {
