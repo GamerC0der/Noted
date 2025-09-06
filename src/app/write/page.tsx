@@ -3,7 +3,11 @@
 import { Navigation } from "@/components/ui/navigation";
 import NotionEditor from "@/components/ui/notion-editor";
 import { NotionToolbar } from "@/components/ui/notion-toolbar";
-import { Edit, Trash2, Plus, Folder, FolderOpen, ChevronRight, ChevronDown, FileText, GripVertical } from "lucide-react";
+import { BlockNoteViewRaw } from "@blocknote/react";
+import { useCreateBlockNote } from "@blocknote/react";
+import "@blocknote/core/fonts/inter.css";
+import "@blocknote/react/style.css";
+import { Edit, Trash2, Plus, Folder, FolderOpen, ChevronRight, ChevronDown, FileText, GripVertical, Home, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
   DndContext,
@@ -102,7 +106,6 @@ const loadNotesFromDB = async (): Promise<Note[]> => {
       request.onsuccess = () => resolve(request.result as Note[]);
     });
   } catch (error) {
-    console.error('Error loading notes:', error);
     return [];
   }
 };
@@ -495,6 +498,48 @@ export default function WritePage() {
   const [nextId, setNextId] = useState(1);
   const [nextFolderId, setNextFolderId] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentView, setCurrentView] = useState<'note' | 'home'>('home');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [username, setUsername] = useState('User');
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [usernameEditValue, setUsernameEditValue] = useState('User');
+
+  const getNoteIcon = (note: Note) => {
+    if (note.icon && !note.icon.startsWith('📝')) {
+      return note.icon;
+    }
+    return <FileText className="h-5 w-5 text-neutral-400" />;
+  };
+
+  const NotePreview = ({ content }: { content: string }) => {
+    const editor = useCreateBlockNote();
+    
+    useEffect(() => {
+      try {
+        const parsedContent = JSON.parse(content);
+        editor.replaceBlocks(editor.document, parsedContent);
+      } catch {
+        // If parsing fails, use empty content
+      }
+    }, [content, editor]);
+
+    return (
+      <BlockNoteViewRaw 
+        editor={editor} 
+        editable={false}
+        className="prose prose-invert max-w-none"
+      />
+    );
+  };
+
+  const filteredNotes = notes.filter(note => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      note.name.toLowerCase().includes(query) ||
+      note.content.toLowerCase().includes(query)
+    );
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -536,6 +581,12 @@ export default function WritePage() {
         setNextFolderId(1);
       }
       
+      const savedUsername = localStorage.getItem('noted-username');
+      if (savedUsername) {
+        setUsername(savedUsername);
+        setUsernameEditValue(savedUsername);
+      }
+      
       setIsLoading(false);
     };
     loadData();
@@ -570,6 +621,33 @@ export default function WritePage() {
 
   const handleSelectNote = (noteId: number) => {
     setSelectedNoteId(noteId);
+    setCurrentView('note');
+  };
+
+  const handleUsernameEditStart = () => {
+    setIsEditingUsername(true);
+    setUsernameEditValue(username);
+  };
+
+  const handleUsernameEditSave = () => {
+    if (usernameEditValue.trim()) {
+      setUsername(usernameEditValue.trim());
+      localStorage.setItem('noted-username', usernameEditValue.trim());
+    }
+    setIsEditingUsername(false);
+  };
+
+  const handleUsernameEditCancel = () => {
+    setUsernameEditValue(username);
+    setIsEditingUsername(false);
+  };
+
+  const handleUsernameKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleUsernameEditSave();
+    } else if (e.key === 'Escape') {
+      handleUsernameEditCancel();
+    }
   };
 
   const handleUpdateNoteContent = (noteId: number, content: string) => {
@@ -849,6 +927,19 @@ export default function WritePage() {
           </div>
 
           <div className="px-4 pb-4 overflow-y-auto max-h-[calc(100vh-120px)]">
+            <div className="mb-4">
+              <button 
+                onClick={() => setCurrentView('home')}
+                className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center space-x-2 ${
+                  currentView === 'home' 
+                    ? 'text-white bg-neutral-800' 
+                    : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
+                }`}
+              >
+                <Home className="h-4 w-4" />
+                <span>Home</span>
+              </button>
+            </div>
             <h2 className="text-neutral-400 text-sm font-medium mb-3 uppercase tracking-wide">Notes</h2>
             <DndContext
               sensors={sensors}
@@ -910,7 +1001,99 @@ export default function WritePage() {
           </div>
         </div>
         <div className="flex-1 pb-40">
-          {selectedNoteId && (
+          {currentView === 'home' ? (
+            <div className="mx-auto md:max-w-3xl lg:max-w-4xl p-8 mt-[10vh]">
+              <h1 className="text-3xl font-bold text-white mb-6">
+                Hello, {isEditingUsername ? (
+                  <input
+                    type="text"
+                    value={usernameEditValue}
+                    onChange={(e) => setUsernameEditValue(e.target.value)}
+                    onBlur={handleUsernameEditSave}
+                    onKeyDown={handleUsernameKeyPress}
+                    className="bg-transparent border-b border-white outline-none"
+                    autoFocus
+                  />
+                ) : (
+                  <span 
+                    onDoubleClick={handleUsernameEditStart}
+                    className="cursor-pointer hover:text-neutral-300 transition-colors"
+                    title="Double-click to edit"
+                  >
+                    {username}
+                  </span>
+                )}
+              </h1>
+              <p className="text-neutral-400 mb-8">Here are your notes:</p>
+              
+              <div className="mb-8">
+                <input
+                  type="text"
+                  placeholder="Search notes..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-lg text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-600 focus:border-transparent"
+                />
+              </div>
+
+              <div className="flex gap-3 mb-8">
+                <button
+                  onClick={() => {
+                    handleAddNote();
+                    setCurrentView('note');
+                  }}
+                  className="flex items-center space-x-2 px-4 py-2 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded-lg text-white transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>New Note</span>
+                </button>
+                <button
+                  onClick={handleAddFolder}
+                  className="flex items-center space-x-2 px-4 py-2 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded-lg text-white transition-colors"
+                >
+                  <Folder className="h-4 w-4" />
+                  <span>New Folder</span>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {filteredNotes.length > 0 ? (
+                  filteredNotes.map((note) => (
+                  <div 
+                    key={note.id} 
+                    className="p-4 bg-neutral-800 rounded-lg hover:bg-neutral-700 transition-colors cursor-pointer"
+                    onClick={() => {
+                      setCurrentView('note');
+                      setSelectedNoteId(note.id);
+                    }}
+                  >
+                    <div className="flex items-center space-x-3 mb-3">
+                      {getNoteIcon(note)}
+                      <h3 className="font-medium text-white text-lg">{note.name}</h3>
+                    </div>
+                    <div className="text-sm text-neutral-300 max-h-32 overflow-hidden">
+                      <NotePreview content={note.content} />
+                    </div>
+                  </div>
+                  ))
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-neutral-400 text-lg">
+                      {searchQuery ? 'No notes found matching your search.' : 'No notes yet.'}
+                    </p>
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery('')}
+                        className="mt-4 text-neutral-300 hover:text-white underline"
+                      >
+                        Clear search
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : selectedNoteId ? (
             <div className="mx-auto md:max-w-3xl lg:max-w-4xl">
               <NotionToolbar
                 title={notes.find(note => note.id === selectedNoteId)?.name || "Untitled"}
@@ -924,7 +1107,7 @@ export default function WritePage() {
                 onChange={(content) => handleUpdateNoteContent(selectedNoteId, content)}
               />
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

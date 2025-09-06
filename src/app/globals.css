@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body {
+  background-color: #000000 !important;
+}
+
+* {
+  background-color: inherit;
+}
+
 .scrollbar-thin {
   scrollbar-width: thin;
   scrollbar-color: rgb(82 82 82) rgb(38 38 38);
@@ -137,6 +145,7 @@
 }
 
 *::-webkit-scrollbar-thumb:hover {
+  cursor: pointer;
   background: #5a5a5a !important;
   border-color: #3a3a3a !important;
 }
