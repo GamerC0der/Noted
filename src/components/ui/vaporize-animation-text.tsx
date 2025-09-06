@@ -160,9 +160,9 @@ export function VaporizeAnimationText({ texts = ["Cool"] }: CreatingPageProps) {
     }, [config, texts])
 
     return (
-        <div className="relative w-full h-screen">
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="flex flex-col items-center space-y-12">
+        <div className="relative w-full h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-center pointer-events-none min-h-full">
+                <div className="flex flex-col items-center space-y-12 py-8">
                     <div className="relative">
                         <div ref={containerRef} className="w-80 h-20 flex items-center justify-center">
                             <canvas ref={canvasRef} className="w-full h-full" />
@@ -195,10 +195,10 @@ export function VaporizeAnimationText({ texts = ["Cool"] }: CreatingPageProps) {
                             />
                         </div>
                     </div>
+                    <div className="mt-8">
+                        <p className="text-xs text-gray-400">© 2025 Noted</p>
+                    </div>
                 </div>
-            </div>
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-                <p className="text-xs text-gray-400">© 2025 Noted</p>
             </div>
         </div>
     )

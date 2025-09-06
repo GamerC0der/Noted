@@ -1,12 +1,9 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-
 export function Navigation() {
   const pathname = usePathname();
-
   return (
     <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-30">
       <div className="relative bg-neutral-900/50 backdrop-blur-sm border border-neutral-800 rounded-full px-2 py-2">
@@ -26,7 +23,6 @@ export function Navigation() {
               />
             )}
           </Link>
-          
           <Link href="/write" className="relative px-4 py-2 rounded-full transition-colors">
             <span className={`text-sm font-medium transition-colors ${
               pathname === "/write" ? "text-white" : "text-neutral-400 hover:text-neutral-300"

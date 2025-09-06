@@ -114,3 +114,37 @@
 .hover\:scrollbar-thumb-neutral-500:hover::-webkit-scrollbar-thumb {
   background: rgb(115 115 115);
 }
+
+* {
+  scrollbar-width: thin !important;
+  scrollbar-color: #4a4a4a #1a1a1a !important;
+}
+
+*::-webkit-scrollbar {
+  width: 10px !important;
+}
+
+*::-webkit-scrollbar-track {
+  background: #1a1a1a !important;
+  border-radius: 6px !important;
+  margin: 4px 0 !important;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #4a4a4a !important;
+  border-radius: 6px !important;
+  border: 1px solid #2a2a2a !important;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a !important;
+  border-color: #3a3a3a !important;
+}
+
+.bn-slash-menu-item {
+  transition: all 0.2s ease !important;
+}
+
+.bn-slash-menu-item:hover {
+  background-color: #2a2a2a !important;
+}
