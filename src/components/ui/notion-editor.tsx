@@ -163,24 +163,24 @@ const NotionEditor = ({ onChange, initialContent, editable = true }: NotionEdito
         </ContextMenuTrigger>
         
         <ContextMenuContent className="w-48">
-          <ContextMenuItem onClick={() => editor.toggleStyles("bold")}>
+          <ContextMenuItem onClick={() => editor.toggleStyles({ bold: true })}>
             <span className="font-bold">B</span>
             <span className="ml-2">Bold</span>
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => editor.toggleStyles("italic")}>
+          <ContextMenuItem onClick={() => editor.toggleStyles({ italic: true })}>
             <span className="italic">I</span>
             <span className="ml-2">Italic</span>
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => editor.toggleStyles("underline")}>
+          <ContextMenuItem onClick={() => editor.toggleStyles({ underline: true })}>
             <span className="underline">U</span>
             <span className="ml-2">Underline</span>
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => editor.toggleStyles("strike")}>
+          <ContextMenuItem onClick={() => editor.toggleStyles({ strike: true })}>
             <span className="line-through">S</span>
             <span className="ml-2">Strikethrough</span>
           </ContextMenuItem>
           <ContextMenuSeparator />
-          <ContextMenuItem onClick={() => editor.toggleStyles("code")}>
+          <ContextMenuItem onClick={() => editor.toggleStyles({ code: true })}>
             <span className="font-mono text-sm">&lt;/&gt;</span>
             <span className="ml-2">Code</span>
           </ContextMenuItem>

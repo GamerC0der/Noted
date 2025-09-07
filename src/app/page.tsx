@@ -1,3 +1,5 @@
+"use client";
+
 import { VaporizeAnimationText } from "@/components/ui/vaporize-animation-text";
 import { Navigation } from "@/components/ui/navigation";
 import {
