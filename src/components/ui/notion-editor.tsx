@@ -11,6 +11,13 @@ import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import "@blocknote/core/style.css";
 import "@blocknote/mantine/style.css";
 import "@blocknote/xl-ai/style.css";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 
 const provider = createOpenAICompatible({
   name: "hackclub-ai",
@@ -122,35 +129,76 @@ const NotionEditor = ({ onChange, initialContent, editable = true }: NotionEdito
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: customStyles }} />
-      <div className="notion-editor bg-black">
-        <BlockNoteView
-          editable={editable}
-          editor={editor}
-          theme="dark"
-          onChange={handleEditorChange}
-          formattingToolbar={false}
-        >
-          <FormattingToolbarController
-            formattingToolbar={() => (
-              <FormattingToolbar>
-                <BlockTypeSelect />
-                <BasicTextStyleButton basicTextStyle="bold" />
-                <BasicTextStyleButton basicTextStyle="italic" />
-                <BasicTextStyleButton basicTextStyle="underline" />
-                <BasicTextStyleButton basicTextStyle="strike" />
-                <BasicTextStyleButton basicTextStyle="code" />
-                <TextAlignButton textAlignment="left" />
-                <TextAlignButton textAlignment="center" />
-                <TextAlignButton textAlignment="right" />
-                <ColorStyleButton />
-                <NestBlockButton />
-                <UnnestBlockButton />
-                <CreateLinkButton />
-              </FormattingToolbar>
-            )}
-          />
-        </BlockNoteView>
-      </div>
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <div className="notion-editor bg-black">
+            <BlockNoteView
+              editable={editable}
+              editor={editor}
+              theme="dark"
+              onChange={handleEditorChange}
+              formattingToolbar={false}
+            >
+              <FormattingToolbarController
+                formattingToolbar={() => (
+                  <FormattingToolbar>
+                    <BlockTypeSelect />
+                    <BasicTextStyleButton basicTextStyle="bold" />
+                    <BasicTextStyleButton basicTextStyle="italic" />
+                    <BasicTextStyleButton basicTextStyle="underline" />
+                    <BasicTextStyleButton basicTextStyle="strike" />
+                    <BasicTextStyleButton basicTextStyle="code" />
+                    <TextAlignButton textAlignment="left" />
+                    <TextAlignButton textAlignment="center" />
+                    <TextAlignButton textAlignment="right" />
+                    <ColorStyleButton />
+                    <NestBlockButton />
+                    <UnnestBlockButton />
+                    <CreateLinkButton />
+                  </FormattingToolbar>
+                )}
+              />
+            </BlockNoteView>
+          </div>
+        </ContextMenuTrigger>
+        
+        <ContextMenuContent className="w-48">
+          <ContextMenuItem onClick={() => editor.toggleStyles("bold")}>
+            <span className="font-bold">B</span>
+            <span className="ml-2">Bold</span>
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => editor.toggleStyles("italic")}>
+            <span className="italic">I</span>
+            <span className="ml-2">Italic</span>
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => editor.toggleStyles("underline")}>
+            <span className="underline">U</span>
+            <span className="ml-2">Underline</span>
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => editor.toggleStyles("strike")}>
+            <span className="line-through">S</span>
+            <span className="ml-2">Strikethrough</span>
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem onClick={() => editor.toggleStyles("code")}>
+            <span className="font-mono text-sm">&lt;/&gt;</span>
+            <span className="ml-2">Code</span>
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem onClick={() => editor.insertBlocks([{ type: "heading", props: { level: 1 } }], editor.getTextCursorPosition().block, "after")}>
+            <span className="text-lg font-bold">H1</span>
+            <span className="ml-2">Heading 1</span>
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => editor.insertBlocks([{ type: "heading", props: { level: 2 } }], editor.getTextCursorPosition().block, "after")}>
+            <span className="text-base font-bold">H2</span>
+            <span className="ml-2">Heading 2</span>
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => editor.insertBlocks([{ type: "heading", props: { level: 3 } }], editor.getTextCursorPosition().block, "after")}>
+            <span className="text-sm font-bold">H3</span>
+            <span className="ml-2">Heading 3</span>
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
     </>
   );
 };

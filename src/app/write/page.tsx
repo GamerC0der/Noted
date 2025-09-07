@@ -8,7 +8,7 @@ import { useCreateBlockNote } from "@blocknote/react";
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/react/style.css";
 import { Edit, Trash2, Plus, Folder, FolderOpen, ChevronRight, ChevronDown, FileText, GripVertical, Home, Search } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   DndContext,
   closestCenter,
@@ -34,10 +34,30 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 
 const NOTES_DB = 'notesDB';
 const NOTES_STORE = 'notes';
 const FOLDERS_STORE = 'folders';
+
+const FOLDER_COLORS = [
+  '#3B82F6',
+  '#EF4444',
+  '#10B981',
+  '#F59E0B',
+  '#8B5CF6',
+  '#EC4899',
+  '#06B6D4',
+  '#84CC16',
+  '#F97316',
+  '#6B7280',
+];
 
 interface Note {
   id: number;
@@ -57,6 +77,7 @@ interface Folder {
   editValue: string;
   isExpanded: boolean;
   order: number;
+  color?: string;
 }
 
 const initDB = (): Promise<IDBDatabase> => {
@@ -226,6 +247,8 @@ const SortableNote = ({
 
   return (
     <div ref={setNodeRef} style={style} className="relative">
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
       <DropdownMenu>
         <div
           className={`flex items-center justify-between text-neutral-300 text-sm px-3 py-2 rounded-md transition-colors group cursor-pointer ${
@@ -243,7 +266,14 @@ const SortableNote = ({
             >
               <GripVertical className="h-3 w-3 text-neutral-500" />
             </div>
-            <FileText className="h-4 w-4 text-blue-400" />
+            <FileText 
+              className="h-4 w-4" 
+              style={{ 
+                color: note.folderId 
+                  ? folders.find(f => f.id === note.folderId)?.color || '#3B82F6'
+                  : '#3B82F6'
+              }} 
+            />
             <span>{note.name}</span>
           </div>
           <DropdownMenuTrigger asChild>
@@ -305,6 +335,38 @@ const SortableNote = ({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+        </ContextMenuTrigger>
+        
+        <ContextMenuContent className="w-48">
+          <ContextMenuItem onClick={() => onSelect(note.id)}>
+            <FileText className="mr-2 h-4 w-4" />
+            Open Note
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem onClick={() => onEditStart(note.id)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Rename
+          </ContextMenuItem>
+          {isInFolder && (
+            <ContextMenuItem onClick={() => onMoveToFolder(note.id, undefined)}>
+              Move to Root
+            </ContextMenuItem>
+          )}
+          {!isInFolder && folders.length > 0 && (
+            <ContextMenuItem onClick={() => onMoveToFolder(note.id, folders[0].id)}>
+              Move to Folder
+            </ContextMenuItem>
+          )}
+          <ContextMenuSeparator />
+          <ContextMenuItem 
+            onClick={() => onDelete(note.id)}
+            className="text-red-400 focus:text-red-300"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
     </div>
   );
 };
@@ -317,6 +379,7 @@ interface SortableFolderProps {
   onDelete: (id: number) => void;
   onToggle: (id: number) => void;
   onEditValueChange: (id: number, value: string) => void;
+  onColorChange: (id: number, color: string) => void;
   notes: Note[];
   selectedNoteId: number | null;
   onSelectNote: (id: number) => void;
@@ -337,6 +400,7 @@ const SortableFolder = ({
   onDelete,
   onToggle,
   onEditValueChange,
+  onColorChange,
   notes,
   selectedNoteId,
   onSelectNote,
@@ -402,6 +466,8 @@ const SortableFolder = ({
 
   return (
     <div ref={setNodeRef} style={style} className="mb-2">
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
       <DropdownMenu>
         <div className="flex items-center justify-between text-neutral-300 text-sm px-3 py-2 rounded-md transition-colors group cursor-pointer hover:bg-neutral-800">
           <div className="flex items-center space-x-2 flex-1" onClick={() => onToggle(folder.id)}>
@@ -412,17 +478,17 @@ const SortableFolder = ({
             >
               <GripVertical className="h-3 w-3 text-neutral-500" />
             </div>
-            {folder.isExpanded ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-            {folder.isExpanded ? (
-              <FolderOpen className="h-4 w-4 text-blue-400" />
-            ) : (
-              <Folder className="h-4 w-4 text-blue-400" />
-            )}
-            <span>{folder.name}</span>
+                {folder.isExpanded ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+                {folder.isExpanded ? (
+                  <FolderOpen className="h-4 w-4" style={{ color: folder.color || '#3B82F6' }} />
+                ) : (
+                  <Folder className="h-4 w-4" style={{ color: folder.color || '#3B82F6' }} />
+                )}
+                <span>{folder.name}</span>
           </div>
           <DropdownMenuTrigger asChild>
             <button
@@ -461,6 +527,48 @@ const SortableFolder = ({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+        </ContextMenuTrigger>
+        
+        <ContextMenuContent className="w-48">
+          <ContextMenuItem onClick={() => onToggle(folder.id)}>
+            {folder.isExpanded ? (
+              <ChevronDown className="mr-2 h-4 w-4" />
+            ) : (
+              <ChevronRight className="mr-2 h-4 w-4" />
+            )}
+            {folder.isExpanded ? 'Collapse' : 'Expand'}
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <ContextMenuItem onClick={() => onEditStart(folder.id)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Rename
+          </ContextMenuItem>
+          <ContextMenuSeparator />
+          <div className="px-2 py-1">
+            <div className="text-xs text-neutral-400 mb-2">Color:</div>
+            <div className="flex flex-wrap gap-1">
+              {FOLDER_COLORS.map((color) => (
+                <button
+                  key={color}
+                  onClick={() => onColorChange(folder.id, color)}
+                  className={`w-6 h-6 rounded-full border-2 transition-all ${
+                    folder.color === color ? 'border-white scale-110' : 'border-neutral-600 hover:border-neutral-400'
+                  }`}
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </div>
+          </div>
+          <ContextMenuSeparator />
+          <ContextMenuItem 
+            onClick={() => onDelete(folder.id)}
+            className="text-red-400 focus:text-red-300"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
       
       {folder.isExpanded && (
         <div className="ml-6 space-y-1 mt-1">
@@ -498,8 +606,11 @@ export default function WritePage() {
   const [nextId, setNextId] = useState(1);
   const [nextFolderId, setNextFolderId] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentView, setCurrentView] = useState<'note' | 'home'>('home');
+  const [currentView, setCurrentView] = useState<'note' | 'home' | 'search'>('home');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sidebarSearchQuery, setSidebarSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [searchSortBy, setSearchSortBy] = useState<'name' | 'date' | 'content'>('name');
   const [username, setUsername] = useState('User');
   const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [usernameEditValue, setUsernameEditValue] = useState('User');
@@ -508,7 +619,10 @@ export default function WritePage() {
     if (note.icon && !note.icon.startsWith('📝')) {
       return note.icon;
     }
-    return <FileText className="h-5 w-5 text-neutral-400" />;
+    const folderColor = note.folderId 
+      ? folders.find(f => f.id === note.folderId)?.color || '#3B82F6'
+      : '#3B82F6';
+    return <FileText className="h-5 w-5" style={{ color: folderColor }} />;
   };
 
   const NotePreview = ({ content }: { content: string }) => {
@@ -519,7 +633,6 @@ export default function WritePage() {
         const parsedContent = JSON.parse(content);
         editor.replaceBlocks(editor.document, parsedContent);
       } catch {
-        // If parsing fails, use empty content
       }
     }, [content, editor]);
 
@@ -532,14 +645,48 @@ export default function WritePage() {
     );
   };
 
-  const filteredNotes = notes.filter(note => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      note.name.toLowerCase().includes(query) ||
-      note.content.toLowerCase().includes(query)
-    );
-  });
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(sidebarSearchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [sidebarSearchQuery]);
+
+  const filteredNotes = useMemo(() => {
+    const activeQuery = currentView === 'search' ? debouncedSearchQuery : searchQuery;
+    if (!activeQuery) return notes;
+    const query = activeQuery.toLowerCase().trim();
+    if (!query) return notes;
+    
+    return notes.filter(note => {
+      const nameMatch = note.name.toLowerCase().includes(query);
+      const contentMatch = note.content.toLowerCase().includes(query);
+      return nameMatch || contentMatch;
+    }).sort((a, b) => {
+      if (currentView === 'search') {
+        if (query) {
+          const aNameMatch = a.name.toLowerCase().includes(query);
+          const bNameMatch = b.name.toLowerCase().includes(query);
+          
+          if (aNameMatch && !bNameMatch) return -1;
+          if (!aNameMatch && bNameMatch) return 1;
+        }
+        
+        switch (searchSortBy) {
+          case 'name':
+            return a.name.localeCompare(b.name);
+          case 'date':
+            return b.id - a.id;
+          case 'content':
+            return b.content.length - a.content.length;
+          default:
+            return 0;
+        }
+      }
+      return 0;
+    });
+  }, [notes, currentView, debouncedSearchQuery, searchQuery, searchSortBy]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -731,13 +878,15 @@ export default function WritePage() {
 
   const handleAddFolder = () => {
     const maxOrder = Math.max(...folders.map(folder => folder.order), -1);
+    const colorIndex = folders.length % FOLDER_COLORS.length;
     const newFolder = {
       id: nextFolderId,
       name: `Folder ${nextFolderId}`,
       isEditing: false,
       editValue: `Folder ${nextFolderId}`,
       isExpanded: true,
-      order: maxOrder + 1
+      order: maxOrder + 1,
+      color: FOLDER_COLORS[colorIndex]
     };
     setFolders([...folders, newFolder]);
     setNextFolderId(nextFolderId + 1);
@@ -804,6 +953,14 @@ export default function WritePage() {
     setFolders(folders.map(folder =>
       folder.id === folderId
         ? { ...folder, editValue: value }
+        : folder
+    ));
+  };
+
+  const handleFolderColorChange = (folderId: number, color: string) => {
+    setFolders(folders.map(folder =>
+      folder.id === folderId
+        ? { ...folder, color }
         : folder
     ));
   };
@@ -926,8 +1083,10 @@ export default function WritePage() {
             </div>
           </div>
 
+          <ContextMenu>
+            <ContextMenuTrigger asChild>
           <div className="px-4 pb-4 overflow-y-auto max-h-[calc(100vh-120px)]">
-            <div className="mb-4">
+                <div className="mb-4 space-y-1">
               <button 
                 onClick={() => setCurrentView('home')}
                 className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center space-x-2 ${
@@ -938,6 +1097,17 @@ export default function WritePage() {
               >
                 <Home className="h-4 w-4" />
                 <span>Home</span>
+              </button>
+                  <button 
+                    onClick={() => setCurrentView('search')}
+                    className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors flex items-center space-x-2 ${
+                      currentView === 'search' 
+                        ? 'text-white bg-neutral-800' 
+                        : 'text-neutral-300 hover:text-white hover:bg-neutral-800'
+                    }`}
+                  >
+                    <Search className="h-4 w-4" />
+                    <span>Search</span>
               </button>
             </div>
             <h2 className="text-neutral-400 text-sm font-medium mb-3 uppercase tracking-wide">Notes</h2>
@@ -960,6 +1130,7 @@ export default function WritePage() {
                     onDelete={handleDeleteFolder}
                     onToggle={handleToggleFolder}
                     onEditValueChange={handleFolderEditValueChange}
+                    onColorChange={handleFolderColorChange}
                     notes={notes}
                     selectedNoteId={selectedNoteId}
                     onSelectNote={handleSelectNote}
@@ -999,9 +1170,192 @@ export default function WritePage() {
               </SortableContext>
             </DndContext>
           </div>
+            </ContextMenuTrigger>
+            
+            <ContextMenuContent className="w-48">
+              <ContextMenuItem onClick={handleAddNote}>
+                <Plus className="mr-2 h-4 w-4" />
+                New Note
+              </ContextMenuItem>
+              <ContextMenuItem onClick={handleAddFolder}>
+                <Folder className="mr-2 h-4 w-4" />
+                New Folder
+              </ContextMenuItem>
+            </ContextMenuContent>
+          </ContextMenu>
         </div>
+        <ContextMenu>
+          <ContextMenuTrigger asChild>
         <div className="flex-1 pb-40">
-          {currentView === 'home' ? (
+              {currentView === 'search' ? (
+                <div className="mx-auto md:max-w-3xl lg:max-w-4xl p-8 mt-[10vh]">
+                  <h1 className="text-3xl font-bold text-white mb-6">Search Documents</h1>
+                  <div className="mb-8">
+                    <input
+                      type="text"
+                      placeholder="Search through all your notes..."
+                      value={sidebarSearchQuery}
+                      onChange={(e) => setSidebarSearchQuery(e.target.value)}
+                      className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-lg text-white placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-600 focus:border-transparent"
+                    />
+                    {sidebarSearchQuery && (
+                      <div className="mt-4 flex items-center space-x-4">
+                        <span className="text-sm text-neutral-400">Sort by:</span>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => setSearchSortBy('name')}
+                            className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                              searchSortBy === 'name'
+                                ? 'bg-neutral-700 text-white'
+                                : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                            }`}
+                          >
+                            Name
+                          </button>
+                          <button
+                            onClick={() => setSearchSortBy('date')}
+                            className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                              searchSortBy === 'date'
+                                ? 'bg-neutral-700 text-white'
+                                : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                            }`}
+                          >
+                            Date
+                          </button>
+                          <button
+                            onClick={() => setSearchSortBy('content')}
+                            className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                              searchSortBy === 'content'
+                                ? 'bg-neutral-700 text-white'
+                                : 'bg-neutral-800 text-neutral-400 hover:text-white'
+                            }`}
+                          >
+                            Content Length
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {sidebarSearchQuery && filteredNotes.length > 0 ? (
+                      <div className="mb-4 flex items-center justify-between">
+                        <p className="text-neutral-400 text-sm">
+                          Found {filteredNotes.length} result{filteredNotes.length !== 1 ? 's' : ''} for "{sidebarSearchQuery}"
+                        </p>
+                        <button
+                          onClick={() => {
+                            setSidebarSearchQuery('');
+                            setDebouncedSearchQuery('');
+                          }}
+                          className="text-xs text-neutral-500 hover:text-neutral-300 underline flex items-center space-x-1"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          <span>Clear</span>
+                        </button>
+                      </div>
+                    ) : null}
+                    
+                    {sidebarSearchQuery && filteredNotes.length > 0 ? (
+                      filteredNotes.map((note) => (
+                        <ContextMenu key={note.id}>
+                          <ContextMenuTrigger asChild>
+                            <div 
+                              className="p-4 bg-neutral-800 rounded-lg hover:bg-neutral-700 transition-colors cursor-pointer"
+                              onClick={() => {
+                                setCurrentView('note');
+                                setSelectedNoteId(note.id);
+                              }}
+                            >
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center space-x-3">
+                                  {getNoteIcon(note)}
+                                  <h3 className="font-medium text-white text-lg">{note.name}</h3>
+                                {note.folderId && (
+                                  <span 
+                                    className="text-xs text-white px-2 py-1 rounded"
+                                    style={{ 
+                                      backgroundColor: folders.find(f => f.id === note.folderId)?.color || '#3B82F6'
+                                    }}
+                                  >
+                                    In Folder
+                                  </span>
+                                )}
+                                </div>
+                                <span className="text-xs text-neutral-500">
+                                  {note.content.length} chars
+                                </span>
+                              </div>
+                              <div className="text-sm text-neutral-300 max-h-32 overflow-hidden">
+                                <NotePreview content={note.content} />
+                              </div>
+                            </div>
+                          </ContextMenuTrigger>
+                          
+                          <ContextMenuContent className="w-48">
+                            <ContextMenuItem onClick={() => {
+                              setCurrentView('note');
+                              setSelectedNoteId(note.id);
+                            }}>
+                              <FileText className="mr-2 h-4 w-4" />
+                              Open Note
+                            </ContextMenuItem>
+                            <ContextMenuSeparator />
+                            <ContextMenuItem onClick={() => handleEditStart(note.id)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Rename
+                            </ContextMenuItem>
+                            {note.folderId && (
+                              <ContextMenuItem onClick={() => handleMoveNoteToFolder(note.id, undefined)}>
+                                Move to Root
+                              </ContextMenuItem>
+                            )}
+                            {!note.folderId && folders.length > 0 && (
+                              <ContextMenuItem onClick={() => handleMoveNoteToFolder(note.id, folders[0].id)}>
+                                Move to Folder
+                              </ContextMenuItem>
+                            )}
+                            <ContextMenuSeparator />
+                            <ContextMenuItem 
+                              onClick={() => handleDeleteNote(note.id)}
+                              className="text-red-400 focus:text-red-300"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </ContextMenuItem>
+                          </ContextMenuContent>
+                        </ContextMenu>
+                      ))
+                    ) : sidebarSearchQuery ? (
+                      <div className="text-center py-12">
+                        <p className="text-neutral-400 text-lg">
+                          No notes found matching "{sidebarSearchQuery}"
+                        </p>
+                        <button
+                          onClick={() => {
+                            setSidebarSearchQuery('');
+                            setDebouncedSearchQuery('');
+                          }}
+                          className="mt-4 text-neutral-300 hover:text-white underline flex items-center space-x-1"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          <span>Clear search</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-center py-12">
+                        <Search className="h-16 w-16 text-neutral-600 mx-auto mb-4" />
+                        <p className="text-neutral-400 text-lg mb-2">
+                          Search through all your documents
+                        </p>
+                        <p className="text-neutral-500 text-sm">
+                          Type in the search box above to find notes by name or content
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : currentView === 'home' ? (
             <div className="mx-auto md:max-w-3xl lg:max-w-4xl p-8 mt-[10vh]">
               <h1 className="text-3xl font-bold text-white mb-6">
                 Hello, {isEditingUsername ? (
@@ -1059,22 +1413,70 @@ export default function WritePage() {
               <div className="space-y-4">
                 {filteredNotes.length > 0 ? (
                   filteredNotes.map((note) => (
+                  <ContextMenu key={note.id}>
+                    <ContextMenuTrigger asChild>
                   <div 
-                    key={note.id} 
                     className="p-4 bg-neutral-800 rounded-lg hover:bg-neutral-700 transition-colors cursor-pointer"
                     onClick={() => {
                       setCurrentView('note');
                       setSelectedNoteId(note.id);
                     }}
                   >
-                    <div className="flex items-center space-x-3 mb-3">
-                      {getNoteIcon(note)}
-                      <h3 className="font-medium text-white text-lg">{note.name}</h3>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        {getNoteIcon(note)}
+                        <h3 className="font-medium text-white text-lg">{note.name}</h3>
+                        {note.folderId && (
+                          <span 
+                            className="text-xs text-white px-2 py-1 rounded"
+                            style={{ 
+                              backgroundColor: folders.find(f => f.id === note.folderId)?.color || '#3B82F6'
+                            }}
+                          >
+                            In Folder
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="text-sm text-neutral-300 max-h-32 overflow-hidden">
                       <NotePreview content={note.content} />
                     </div>
                   </div>
+                    </ContextMenuTrigger>
+                    
+                    <ContextMenuContent className="w-48">
+                      <ContextMenuItem onClick={() => {
+                        setCurrentView('note');
+                        setSelectedNoteId(note.id);
+                      }}>
+                        <FileText className="mr-2 h-4 w-4" />
+                        Open Note
+                      </ContextMenuItem>
+                      <ContextMenuSeparator />
+                      <ContextMenuItem onClick={() => handleEditStart(note.id)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Rename
+                      </ContextMenuItem>
+                      {note.folderId && (
+                        <ContextMenuItem onClick={() => handleMoveNoteToFolder(note.id, undefined)}>
+                          Move to Root
+                        </ContextMenuItem>
+                      )}
+                      {!note.folderId && folders.length > 0 && (
+                        <ContextMenuItem onClick={() => handleMoveNoteToFolder(note.id, folders[0].id)}>
+                          Move to Folder
+                        </ContextMenuItem>
+                      )}
+                      <ContextMenuSeparator />
+                      <ContextMenuItem 
+                        onClick={() => handleDeleteNote(note.id)}
+                        className="text-red-400 focus:text-red-300"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                  </ContextMenu>
                   ))
                 ) : (
                   <div className="text-center py-12">
@@ -1109,6 +1511,37 @@ export default function WritePage() {
             </div>
           ) : null}
         </div>
+          </ContextMenuTrigger>
+          
+          <ContextMenuContent className="w-48">
+            <ContextMenuItem onClick={() => setCurrentView('home')}>
+              <Home className="mr-2 h-4 w-4" />
+              Go to Home
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => setCurrentView('search')}>
+              <Search className="mr-2 h-4 w-4" />
+              Go to Search
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={handleAddNote}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Note
+            </ContextMenuItem>
+            <ContextMenuItem onClick={handleAddFolder}>
+              <Folder className="mr-2 h-4 w-4" />
+              New Folder
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={() => {
+              setSearchQuery('');
+              setSidebarSearchQuery('');
+              setDebouncedSearchQuery('');
+            }}>
+              <Search className="mr-2 h-4 w-4" />
+              Clear Search
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
       </div>
     </div>
   );

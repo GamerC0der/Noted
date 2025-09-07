@@ -6,6 +6,14 @@ import VaultLock from "./vault-lock"
 import NotepadCard from "./notepad-card"
 import AICard from "./ai-card"
 import Link from "next/link"
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+import { FileText, Folder, Settings, HelpCircle } from "lucide-react";
 
 type Particle = {
     x: number
@@ -160,14 +168,16 @@ export function VaporizeAnimationText({ texts = ["Cool"] }: CreatingPageProps) {
     }, [config, texts])
 
     return (
-        <div className="relative w-full h-[80vh] overflow-y-auto">
-            <div className="flex items-center justify-center pointer-events-none min-h-full">
-                <div className="flex flex-col items-center space-y-12 py-8">
-                    <div className="relative">
+        <ContextMenu>
+            <ContextMenuTrigger asChild>
+                <div className="relative w-full h-[80vh] overflow-y-auto">
+                    <div className="flex items-center justify-center pointer-events-none min-h-full">
+                        <div className="flex flex-col items-center space-y-12 py-8">
+                            <div className="relative">
                         <div ref={containerRef} className="w-80 h-20 flex items-center justify-center">
                             <canvas ref={canvasRef} className="w-full h-full" />
                         </div>
-                        <span className="absolute inset-0 flex items-center justify-center text-7xl font-semibold text-transparent select-text pointer-events-auto">
+                        <span className="absolute inset-0 flex items-center justify-center text-7xl font-semibold text-white select-text pointer-events-auto">
                             {texts[0]}
                         </span>
                     </div>
@@ -195,11 +205,38 @@ export function VaporizeAnimationText({ texts = ["Cool"] }: CreatingPageProps) {
                             />
                         </div>
                     </div>
-                    <div className="mt-8">
-                        <p className="text-xs text-gray-400">© 2025 Noted</p>
+                            <div className="mt-8">
+                                <p className="text-xs text-gray-400">© 2025 Noted</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </ContextMenuTrigger>
+            
+            <ContextMenuContent className="w-48">
+                <ContextMenuItem asChild>
+                    <Link href="/write">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Start Writing
+                    </Link>
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem asChild>
+                    <Link href="/write">
+                        <Folder className="mr-2 h-4 w-4" />
+                        Create Folder
+                    </Link>
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem onClick={() => window.open('https://github.com', '_blank')}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => window.open('https://github.com', '_blank')}>
+                    <HelpCircle className="mr-2 h-4 w-4" />
+                    Help
+                </ContextMenuItem>
+            </ContextMenuContent>
+        </ContextMenu>
     )
 }
