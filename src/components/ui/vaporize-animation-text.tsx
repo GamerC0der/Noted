@@ -200,8 +200,8 @@ export function VaporizeAnimationText({ texts = ["Cool"] }: CreatingPageProps) {
                                 cardDescription="Quick and Easy"
                             />
                             <AICard 
-                                cardTitle="AI Integrated"
-                                cardDescription="Hyper-Fast AI"
+                                cardTitle="Notion Style"
+                                cardDescription="Block-Based"
                             />
                         </div>
                     </div>
